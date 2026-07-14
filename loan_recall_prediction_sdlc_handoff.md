@@ -18,6 +18,7 @@ The current MVP implementation has completed the requested Stage 3 foundation it
 - Added unit coverage for point-in-time feature behavior, including future event exclusion and engineered feature values.
 - Added unit coverage for data quality validation failures and non-blocking warnings.
 - Updated the README MVP scope to include point-in-time feature engineering and scoring data quality checks.
+- Tightened model artifact reproducibility semantics by removing generated wall-clock artifact fields, adding explicit dataset/label/window/code/seed reproducibility metadata, and validating a canonical SHA-256 artifact digest.
 
 ---
 
