@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -13,6 +15,7 @@ class PredictionRequest(BaseModel):
     loan_ids: list[str] = Field(min_length=1)
     as_of_timestamp: datetime
     horizons: list[int] = Field(default_factory=lambda: [1, 3, 5, 10])
+    feature_rows: list[dict[str, Any]] | None = None
 
 
 class LoanPrediction(BaseModel):
