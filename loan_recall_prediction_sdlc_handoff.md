@@ -9,6 +9,18 @@
 
 ---
 
+# Implementation Handoff Update — 2026-07-14
+
+The current MVP implementation has completed the requested Stage 3 foundation items:
+
+- Added point-in-time loan feature engineering that computes loan age, utilization ratio, lender recent recall activity, lender recall rate, and borrow-fee percentile while excluding recall and market rows after each scoring row's `as_of_timestamp` to prevent look-ahead leakage.
+- Added reusable scoring-row data quality checks with structured PASS/FAIL status, errors, warnings, duplicate loan/as-of detection, required-field validation, and non-blocking negative inventory warnings.
+- Added unit coverage for point-in-time feature behavior, including future event exclusion and engineered feature values.
+- Added unit coverage for data quality validation failures and non-blocking warnings.
+- Updated the README MVP scope to include point-in-time feature engineering and scoring data quality checks.
+
+---
+
 # 1. Executive Summary
 
 Loan recalls create operational risk, potential buy-ins, settlement failures, lost revenue, and client disruption. Most firms manage recall risk reactively using rules, trader experience, and manual monitoring. The proposed system will produce calibrated recall probabilities at the loan level and make those predictions available to traders, operations teams, inventory managers, and collateral or allocation optimizers.
