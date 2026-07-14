@@ -5,8 +5,9 @@ This repository contains the initial MVP scaffold for a securities lending loan 
 - typed configuration for horizons, model versions, feature-set versions, and risk-band thresholds;
 - point-in-time label construction for lender-initiated recall events;
 - deterministic placeholder scoring behind the API contract;
-- risk band and reason-code utilities; and
-- unit tests for label logic and scoring controls.
+- risk band and reason-code utilities;
+- point-in-time feature engineering and scoring data quality checks; and
+- unit tests for label logic, feature construction, data quality, and scoring controls.
 
 ## Quick start
 
