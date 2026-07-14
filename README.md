@@ -18,6 +18,16 @@ pip install -e '.[dev]'
 pytest
 ```
 
+## Modeling MVP
+
+The repository now includes Stage 3 model-development utilities:
+
+- `ml_recall.modeling.training.train_horizon_models` trains one binary classifier per recall horizon using numeric point-in-time features and `label_recall_{horizon}d` labels.
+- `ml_recall.modeling.training.predict_recall_probabilities` scores rows with the fitted per-horizon bundle.
+- `ml_recall.modeling.evaluation` exposes PR-AUC, Brier score, and precision/recall-at-K metrics aligned with the handoff success measures.
+
+These utilities intentionally keep artifact persistence and model-registry integration out of scope until the production training pipeline is selected.
+
 ## API contract
 
 The MVP API exposes the handoff endpoint:
