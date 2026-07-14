@@ -775,7 +775,83 @@ Dashboard views:
 - Model health
 - Data freshness
 
-## 7.8 Development Deliverables
+## 7.8 PowerBI Analytics Output Handoff
+
+The analytics layer must treat PowerBI as a first-class downstream consumer rather than an afterthought. Before model outputs are promoted beyond development, the product, data engineering, BI, quant, model-risk, and operations owners must complete the following decisions and implementation steps.
+
+### Required decisions before building PowerBI ingestion
+
+| Decision | Owner | Required output |
+|---|---|---|
+| Business grain | Product, BI, Quant | Confirm whether reporting is loan-as-of, loan-horizon-as-of, alert, action, or outcome grain. The recommended default is one row per `loan_id`, `as_of_date`, and `horizon_days` in the PowerBI fact table. |
+| Refresh cadence | Product, Data Eng | Select daily-only, intraday snapshot, or streaming/near-real-time refresh and document the freshness SLA displayed in reports. |
+| Semantic model mode | BI, Data Eng | Choose Import, DirectQuery, composite model, or Fabric semantic model based on volume, latency, and entitlement requirements. |
+| Risk thresholds | Product, Desk, Model Risk | Approve the Low, Moderate, High, and Critical thresholds for each horizon and whether thresholds vary by desk, lender, asset class, or region. |
+| Security model | Compliance, BI, Data Governance | Define row-level security by desk, region, client, lender, borrower, portfolio, and model-risk audience. |
+| Explainability display | Quant, Model Risk, Product | Approve which reason codes, feature contributions, uncertainty flags, and model limitations may be shown to each user group. |
+| Action taxonomy | Operations, Product | Define valid user actions, escalation statuses, suppression reasons, and closed-loop outcome codes. |
+| Certified measures | Finance, Product, BI | Approve business-value formulas for avoided fail cost, emergency sourcing cost, buy-in exposure, and intervention cost. |
+| Historical retention | Data Governance | Define retention, partitioning, and archival policy for prediction snapshots, features, alerts, actions, and outcomes. |
+| Reconciliation control | Data Eng, BI | Define row-count, freshness, schema, and aggregate reconciliation checks between the prediction store and PowerBI model. |
+
+### Model-output contract for PowerBI
+
+Publish a curated analytics table or view rather than connecting reports directly to raw API responses. The minimum PowerBI-ready prediction fact should include:
+
+| Field | Purpose |
+|---|---|
+| `prediction_id` | Stable unique key for a scored loan-horizon snapshot. |
+| `loan_id` | Join key to loan and action dimensions. |
+| `security_id` | Join key to security attributes. |
+| `lender_id` | Join key to lender attributes and row-level security rules. |
+| `borrower_id` | Join key to borrower, desk, or client coverage. |
+| `as_of_timestamp_utc` | Exact model scoring timestamp. |
+| `as_of_date` | Date key for PowerBI relationships and incremental refresh. |
+| `horizon_days` | Prediction horizon, such as 1, 3, 5, or 10 business days. |
+| `recall_probability` | Calibrated probability used for ranking, bands, and expected-value measures. |
+| `risk_band` | Approved business band: Low, Moderate, High, or Critical. |
+| `risk_score_rank` | Optional same-day percentile or rank for top-K reporting. |
+| `reason_code_1` through `reason_code_5` | Ordered reason codes for report explanations. |
+| `top_feature_1` through `top_feature_5` | Optional user-approved feature names for explainability. |
+| `data_quality_status` | PASS, WARN, or FAIL. FAIL rows should be hidden from operational pages by default. |
+| `model_version` | Version used to score the row. |
+| `feature_set_version` | Feature definition version. |
+| `calibration_version` | Calibration artifact version. |
+| `alert_generated_flag` | Whether this prediction generated an alert. |
+| `alert_id` | Join key to alert and action fact tables. |
+| `actual_recall_flag` | Outcome once known. Null before the outcome window closes. |
+| `actual_recall_timestamp_utc` | Outcome timestamp when applicable. |
+| `recall_quantity` | Quantity recalled when applicable. |
+| `expected_loss_amount` | Optional model/business calculation for prioritized intervention. |
+| `expected_value_amount` | Optional expected benefit net of intervention cost. |
+
+### Implementation steps for PowerBI ingestion
+
+1. Create certified SQL views or lakehouse tables for `fact_recall_prediction`, `fact_recall_alert`, `fact_user_action`, `fact_recall_outcome`, and core dimensions for date, loan, security, lender, borrower, desk, risk band, model version, and reason code.
+2. Flatten or bridge nested model outputs. Probabilities should be stored in long form by horizon. Reason codes can be exposed either as ordered columns for simple tables or as a bridge table for multi-select analysis.
+3. Normalize timestamps to UTC and provide local-market display columns only in dimensions or report logic.
+4. Add schema contracts and data-quality checks that fail the BI publish if required columns, types, uniqueness, or date partitions are missing.
+5. Partition large facts by `as_of_date` and configure incremental refresh so PowerBI only reloads new or recently changed partitions.
+6. Certify DAX measures centrally in the semantic model. Report authors should reuse certified measures instead of redefining recall rate, alert volume, precision, or business-value logic.
+7. Implement row-level security and object-level security before publishing to production workspaces.
+8. Add reconciliation tiles to an admin page showing latest scoring timestamp, source row counts, PowerBI row counts, failed quality rows, and refresh status.
+9. Validate representative user journeys with the desk, operations, model risk, and product before release.
+10. Document report ownership, support escalation, refresh SLA, data lineage, semantic-model dependencies, and approved enhancement process.
+
+### PowerBI acceptance criteria
+
+- A certified semantic model exists and is owned by BI/data engineering.
+- Operational pages can filter by date, horizon, desk, lender, security, risk band, model version, and data-quality status.
+- Metrics reconcile to the prediction store within documented tolerance.
+- Row-level security is tested for at least one user in each entitled role.
+- The report includes data freshness, model version, feature-set version, and limitations text.
+- Critical-risk loans can be exported or drilled through only by authorized users.
+- Model-risk and monitoring pages distinguish open outcome windows from completed outcome windows.
+
+See `docs/powerbi_analytics_guide.md` for the report design, DAX, calculated-column, and data-modeling guide.
+
+
+## 7.9 Development Deliverables
 
 - Source code
 - CI/CD configuration
@@ -792,7 +868,7 @@ Dashboard views:
 - Documentation
 - Prototype model card
 
-## 7.9 Stage 3 Exit Criteria
+## 7.10 Stage 3 Exit Criteria
 
 - Code passes CI.
 - Data tests pass.
