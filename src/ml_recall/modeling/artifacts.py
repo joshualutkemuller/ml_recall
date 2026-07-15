@@ -24,12 +24,32 @@ class ReproducibilityMetadata:
     training_window_end: str
     code_commit: str
     random_seed: int = 0
+    training_row_count: int | None = None
+    label_positive_rates: dict[str, float] | None = None
+    validation_metrics: dict[str, dict[str, float]] | None = None
+    training_config_path: str | None = None
+    training_config_sha256: str | None = None
+    feature_schema_sha256: str | None = None
+    intended_environment: str | None = None
+    artifact_creator: str | None = None
+    training_job_id: str | None = None
 
 
 def _canonical_json(payload: dict[str, Any]) -> str:
     """Return the canonical JSON representation used for artifact hashing."""
 
     return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def _feature_schema_digest(bundle: RecallModelBundle) -> str:
+    """Hash the ordered feature schema shared by every horizon model."""
+
+    feature_columns = list(bundle.models[0].feature_columns) if bundle.models else []
+    payload = {
+        "feature_set_version": bundle.feature_set_version,
+        "feature_columns": feature_columns,
+    }
+    return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
 
 
 def artifact_digest(artifact: dict[str, Any]) -> str:
@@ -55,8 +75,10 @@ def bundle_to_artifact(
     metadata = (
         asdict(reproducibility)
         if isinstance(reproducibility, ReproducibilityMetadata)
-        else reproducibility
+        else dict(reproducibility)
     )
+    metadata = {key: value for key, value in metadata.items() if value is not None}
+    metadata.setdefault("feature_schema_sha256", _feature_schema_digest(bundle))
     artifact: dict[str, Any] = {
         "schema_version": ARTIFACT_SCHEMA_VERSION,
         "model_version": bundle.model_version,
@@ -110,6 +132,7 @@ def validate_artifact(artifact: dict[str, Any]) -> None:
         "training_window_end",
         "code_commit",
         "random_seed",
+        "feature_schema_sha256",
     )
     missing_reproducibility = [
         field for field in required_reproducibility_fields if field not in reproducibility
