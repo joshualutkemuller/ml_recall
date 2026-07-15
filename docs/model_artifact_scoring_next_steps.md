@@ -56,22 +56,9 @@ Recommended checks:
 - Response ordering should follow request `loan_ids`.
 - Duplicate loan/as-of rows should remain a hard validation failure.
 
-## 5. Improve reason codes to reflect model contributions
+## 5. Expand contribution explanation outputs
 
-The current scorer can generate reason codes from raw feature values. For a transparent scorecard, reason codes should be based on model contribution magnitudes.
-
-Recommended approach:
-
-1. For each model feature, compute:
-
-   ```text
-   contribution = coefficient * (feature_value - feature_median)
-   ```
-
-2. Rank positive contribution magnitudes per horizon.
-3. Aggregate contributions across requested horizons when the API returns one risk band for multiple horizons.
-4. Map the top contributors to business-friendly reason codes.
-5. Include tests that reason codes change when feature contributions change.
+The scorer now generates reason codes from model contribution magnitudes rather than raw feature values. A future enhancement can expose numeric contribution details alongside the existing business-friendly code list for audit and analyst drill-through workflows.
 
 ## 6. Add a real batch scoring entry point
 
@@ -147,7 +134,7 @@ Recommended tests:
 2. Add artifact determinism, checksum, and richer metadata.
 3. Add API integration tests for scorer and fallback paths.
 4. Add a batch scoring command-line entry point.
-5. Switch reason codes from raw feature values to contribution-based explanations.
+5. Expose numeric contribution details alongside contribution-based reason codes.
 6. Add structured logging and metrics.
 7. Add golden artifact compatibility tests.
 8. Decide and document the model promotion and scorer reload policy.
