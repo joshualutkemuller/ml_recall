@@ -8,7 +8,11 @@ from typing import Any
 
 from ml_recall.common.config import RiskBandThresholds
 from ml_recall.modeling.artifacts import load_model_bundle
-from ml_recall.modeling.training import RecallModelBundle, predict_recall_probabilities
+from ml_recall.modeling.training import (
+    RecallModelBundle,
+    aggregate_feature_contributions,
+    predict_recall_probabilities,
+)
 from ml_recall.quality.checks import QualityCheckResult, validate_scoring_rows
 from ml_recall.scoring.risk import assign_risk_band, generate_reason_codes
 
@@ -96,7 +100,11 @@ class RecallScorer:
                 if horizon in requested
             }
             max_probability = max(probabilities.values())
-            contributions = {column: float(scored.get(column) or 0.0) for column in self.feature_columns}
+            contributions = aggregate_feature_contributions(
+                self.bundle,
+                scored,
+                horizons=tuple(requested),
+            )
             predictions.append(
                 ScoredLoan(
                     loan_id=str(scored["loan_id"]),

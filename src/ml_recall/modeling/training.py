@@ -136,6 +136,38 @@ def train_horizon_models(
     return RecallModelBundle(tuple(fitted), model_version, feature_set_version)
 
 
+def feature_contributions(model: HorizonModel, row: Mapping[str, Any]) -> dict[str, float]:
+    """Return per-feature log-odds contributions for one horizon model.
+
+    Contributions are centered on the training median so reason codes explain what moved the
+    transparent scorecard above or below its baseline, not which raw input values were largest.
+    """
+
+    contributions: dict[str, float] = {}
+    for column in model.feature_columns:
+        value = _safe_float(row.get(column))
+        centered = (model.medians[column] if value is None else value) - model.medians[column]
+        contributions[column] = model.coefficients[column] * centered
+    return contributions
+
+
+def aggregate_feature_contributions(
+    bundle: RecallModelBundle,
+    row: Mapping[str, Any],
+    *,
+    horizons: Sequence[int] | None = None,
+) -> dict[str, float]:
+    """Sum per-feature contributions across requested horizon models."""
+
+    requested = set(horizons or bundle.horizons)
+    contributions = {column: 0.0 for column in bundle.models[0].feature_columns}
+    for model in bundle.models:
+        if model.horizon not in requested:
+            continue
+        for column, contribution in feature_contributions(model, row).items():
+            contributions[column] += contribution
+    return contributions
+
 def _predict_one(model: HorizonModel, row: Mapping[str, Any]) -> float:
     score = model.intercept
     for column in model.feature_columns:
