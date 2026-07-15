@@ -44,4 +44,17 @@ Run locally with:
 uvicorn ml_recall.api.app:app --reload
 ```
 
+## Batch scoring
+
+Persisted artifacts can also be scored without FastAPI by using the batch CLI. The command reads JSON, CSV, or Parquet scoring rows, validates required fields and model feature columns, writes long-form predictions, and exits nonzero on hard data-quality failures.
+
+```bash
+ml-recall-batch-score \
+  --artifact /path/to/bundle.json \
+  --input /path/to/scoring_rows.json \
+  --output /path/to/predictions.json \
+  --horizons 1,3,5,10 \
+  --diagnostics /path/to/diagnostics.json
+```
+
 The current scorer is deterministic and intentionally simple. It preserves the response contract while training, calibration, model registry, and feature-store integrations are built out.

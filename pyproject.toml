@@ -17,6 +17,9 @@ dependencies = [
   "numpy>=1.24",
 ]
 
+[project.scripts]
+ml-recall-batch-score = "ml_recall.cli.batch_score:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
