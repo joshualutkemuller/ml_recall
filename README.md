@@ -9,6 +9,10 @@ This repository contains the initial MVP scaffold for a securities lending loan 
 - point-in-time feature engineering and scoring data quality checks; and
 - unit tests for label logic, feature construction, data quality, and scoring controls.
 
+## Requirements and priority guide
+
+For a concise view of what is required for the MVP versus high-priority follow-up and nice-to-have capabilities, see [`docs/requirements_priority_guide.md`](docs/requirements_priority_guide.md).
+
 ## Quick start
 
 ```bash
